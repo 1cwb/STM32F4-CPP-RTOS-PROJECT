@@ -1,7 +1,6 @@
 #include "sys.h"
 #include "delay.h"
 #include "usart.h"
-#include "led.h"
 //stm32 f411xx hclk 96MHZ hse = 25M, M=25, N=384, P=4, Q=8
 //SYSCLK(系统时钟) =96MHz
 //PLL 主时钟 =96MHz
@@ -38,7 +37,7 @@ void Stm32_Clock_Init(uint32_t pllm, uint32_t plln, uint32_t pllp, uint32_t pllq
         ret=HAL_RCC_ClockConfig(&RCC_ClkInitStructure, FLASH_LATENCY_3);
         if(ret != HAL_OK) break;
     }while(0);
-	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);//systick时钟默认使用HCLK，可以手动设置为AHB/8
+	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/THREAD_TICK_PER_SECOND);//systick时钟默认使用HCLK，可以手动设置为AHB/8
 	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
     if(ret!=HAL_OK) while(1);
 }
@@ -46,7 +45,7 @@ void Stm32_Clock_Init(uint32_t pllm, uint32_t plln, uint32_t pllp, uint32_t pllq
 void hwInit()
 {
     HAL_Init(); //初始化 HAL 库
-    Stm32_Clock_Init(25,384,4,8); //设置时钟,96Mhz
+    Stm32_Clock_Init(PLLM_VALUE,PLLN_VALUE,PLLP_VALUE,PLLQ_VALUE); //设置时钟,96Mhz
     delay_init(HAL_RCC_GetHCLKFreq()/1000000);//1US跑的tick数
     uart_init(115200);
 }

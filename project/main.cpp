@@ -3,17 +3,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "delay.h"
-#include "led.h"
+#include "mplatform.hpp"
+#include "mdevice.hpp"
+#include "mleddrv.hpp"
 using namespace  std;
 int main(void)
 {
-    led_init();
+    mDev::mLed* led0 = (mDev::mLed*)mDev::mPlatform::getInstance()->getDevice("led0");
     printf("==========================================================\n");
     while(1)
     {
-        led_off();
+        led0->off();
         delay_ms(100);
-        led_on();
+        led0->on();
         delay_ms(100);
     }
     return 0;

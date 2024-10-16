@@ -29,7 +29,7 @@ struct wqueueNode
     wqueueFunc wakeup;
     uint32_t key;
     wqueueNode(const wqueueFunc& func)
-    :pollingThread(mthread::threadSelf()),
+    :pollingThread(nullptr),
      wakeup(func),
      key(0)
     {}
@@ -41,11 +41,11 @@ class mWqueue
 {
 public:
     mWqueue() = default;
-    mWqueue(const mWqueue& mq) = default;
-    mWqueue(mWqueue&& mq) = default;
     ~mWqueue() = default;
-    mWqueue& operator=(const mWqueue& mq) = default;
-    mWqueue& operator=(mWqueue&& mq) = default;
+    mWqueue(const mWqueue& mq) = delete;
+    mWqueue(mWqueue&& mq) = delete;
+    mWqueue& operator=(const mWqueue& mq) = delete;
+    mWqueue& operator=(mWqueue&& mq) = delete;
 
     void add(wqueueNode_t* node);
     void remove(wqueueNode_t* node);

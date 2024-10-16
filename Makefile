@@ -48,7 +48,13 @@ EXTRA_LINK_FLAGS	:= -g -gdwarf-2 -lc -lm -lstdc++ -lnosys -T$(LINK_FILES) \
 #################################################################################################
 DEFINE    :=-DSTM32F411xE \
 			-DUSE_HAL_DRIVER \
-			-DHSE_VALUE=25000000
+			-DHSE_VALUE=25000000 \
+			-DPLLM_VALUE=25 \
+			-DPLLN_VALUE=384 \
+			-DPLLP_VALUE=4 \
+			-DPLLQ_VALUE=8
+
+DEFINE    +=-DTHREAD_TICK_PER_SECOND=1000
 ###############################################################
 CFLAGS 				+= $(MCU_FLAGS) $(C_COMPILE_FLAGS) $(DEFINE)
 CXXFLAGS 			+= $(MCU_FLAGS) $(CXX_COMPILE_FLAGS) $(DEFINE)
