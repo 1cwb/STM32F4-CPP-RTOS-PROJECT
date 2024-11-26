@@ -1,4 +1,9 @@
 #include "mthread.hpp"
+#include "mklog.hpp"
+
+mthread::mThreadHookCallbackFunc mthread::initHookCb_ = nullptr;
+mthread::mThreadHookCallbackFunc mthread::deInitHookCb_ = nullptr;
+
 void mthread::threadExti()
 {
     register long level;
@@ -84,6 +89,11 @@ mResult mthread::threadDelete()
         /* remove from schedule */
         mSchedule::getInstance()->scheduleRemoveThread(&thData_);
     }
+    if(deInitHookCb_)
+    {
+        deInitHookCb_(this);
+    }
+
     threadCleanupExecute(&thData_);
 
     /* release thread timer */
@@ -583,7 +593,10 @@ mResult mthread::threadDetach()
         /* remove from schedule */
         mSchedule::getInstance()->scheduleRemoveThread(&thData_);
     }
-
+    if(deInitHookCb_)
+    {
+        deInitHookCb_(this);
+    }
     threadCleanupExecute(&thData_);
 
     /* release thread timer */
@@ -677,7 +690,10 @@ mResult mthread::threadInit( const char       *name,
     /* initialize thread timer */
     thTimer_.init(thData_.name,threadTimeout,this,0,TIMER_FLAG_ONE_SHOT);
     //RT_OBJECT_HOOK_CALL(rt_thread_inited_hook, (thread));
-
+    if(initHookCb_)
+    {
+        initHookCb_(this);
+    }
     return M_RESULT_EOK;
 }
 mResult mthread::threadCreate(const char       *name,
@@ -751,32 +767,4 @@ void mthread::threadFunc(void* p)
             thread->cb_(thread->callbackParam_);
         }
     }
-}
-
-void mthread::showAllThreadStackSizeInfo()
-{
-    long level;
-    mList_t* node{nullptr};
-    mObject_t* object{nullptr};
-    mthread* pthread{nullptr};
-    struct mObjectInformation_t *information = nullptr;
-
-    information = mObject::getInstance()->objectGetInformation(M_OBJECT_CLASS_THREAD);
-    if (information == nullptr) return ;
-
-    level = HW::hwInterruptDisable();
-    /* retrieve pointer of object */
-    for(node = information->objectList.next; node != &(information->objectList); node = node->next)
-    {
-        object = listEntry(node, mObject_t, list);
-        if(object)
-        {
-            pthread = reinterpret_cast<mthread*>(object);
-            printf("thread %s totalStackSize = %ld, usedStackSize = %ld, freeStackSize = %ld\r\n",   pthread->getThTimer_t()->name,
-                                                                                pthread->getTotalStackSize(),
-                                                                                pthread->getTotalStackSize() - pthread->getFreeStackSize(),
-                                                                                pthread->getFreeStackSize());
-        }
-    }
-    HW::hwInterruptEnable(level);
 }

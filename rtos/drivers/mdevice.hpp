@@ -4,10 +4,16 @@
 #include <string>
 namespace mDev
 {
+template<typename T>
+struct devCbData
+{
+    T data;
+    uint32_t len;
+};
     using initCallbackExt = std::function<void(bool binit)>;
 class mDevice
 {
-    using interruptCallback = std::function<void(mDevice*)>;
+    using interruptCallback = std::function<void(mDevice*, void*)>;
 public:
     explicit mDevice(const char* name):_devname(name)
     {
@@ -24,8 +30,8 @@ public:
     const char* getDeviceName() const {return _devname.c_str();}
 
     void registerInterruptCb(const interruptCallback& cb){_cb = cb;}
-    void unregisterInterrupt(){_cb = interruptCallback();}
-    void runInterruptCb(){if(_cb)_cb(this);}
+    void unregisterInterrupt(){_cb = nullptr;}
+    void runInterruptCb(void* p){if(_cb)_cb(this,p);}
     void runInitCallback(bool binit){if(_initcb)_initcb(binit);}
 protected:
     std::string _devname;

@@ -8,7 +8,8 @@
 #include "mtask.hpp"
 #include "board.hpp"
 #include "sys.h"
-
+#include "systeminfo.hpp"
+#include "mklog.hpp"
 
 static int initStart(void)
 {
@@ -28,9 +29,9 @@ void componentsAutoinit(void)
     const struct initDesc_t *desc;
     for (desc = &__initDesc_t_initStart; desc < &__initDesc_t_initEnd; desc ++)
     {
-        printf("initialize %s ", desc->fnName);
+        KLOGD("initialize %s ", desc->fnName);
         result = desc->fn();
-        printf(":%d done\r\n", result);
+        KLOGD("return value :%d done", result);
     }
 }
 
@@ -45,7 +46,6 @@ static uint8_t mainStack[MAIN_THREAD_STACK_SIZE];
 void mainThreadEntry(void *parameter)
 {
     extern int main(void);
-    componentsAutoinit();
     mTaskManager::getInstance()->init();
     mTaskManager::getInstance()->start();
     main();
@@ -97,6 +97,8 @@ private:
 extern "C" int entry(void)
 {
     boardInit();
+    componentsAutoinit();
+    systemInfo::getInstance()->init();
     mComponets::getInstance()->startUp();
     return 0;
 }

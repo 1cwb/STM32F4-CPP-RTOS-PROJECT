@@ -1,5 +1,8 @@
 #include "mscheduler.hpp"
+#include "mklog.hpp"
 //#ifdef RT_USING_OVERFLOW_CHECK
+mSchedule::mScheduleHookCallbackFunc mSchedule::scheduleHookCb_ = nullptr;
+
 void mSchedule::schedulerStackCheck(thread_t *thread)
 {
     MASSERT(thread != nullptr);
@@ -15,7 +18,7 @@ void mSchedule::schedulerStackCheck(thread_t *thread)
     {
         unsigned long level;
 
-        rt_kprintf("thread:%s stack overflow\n", thread->name);
+        KLOGD("thread:%s stack overflow", thread->name);
 #ifdef RT_USING_FINSH //tony
         {
             extern long list_thread(void);
@@ -28,13 +31,13 @@ void mSchedule::schedulerStackCheck(thread_t *thread)
 #if defined(ARCH_CPU_STACK_GROWS_UPWARD)
     else if ((unsigned long)thread->sp > ((unsigned long)thread->stackAddr + thread->stackSize))
     {
-        rt_kprintf("warning: %s stack is close to the top of stack address.\n",
+        KLOGD("warning: %s stack is close to the top of stack address.",
                 thread->name);
     }
 #else
     else if ((unsigned long)thread->sp <= ((unsigned long)thread->stackAddr + 32))
     {
-        rt_kprintf("warning: %s stack is close to end of stack address.\n",
+        KLOGD("warning: %s stack is close to end of stack address.",
                 thread->name);
     }
 #endif
@@ -97,7 +100,7 @@ void mSchedule::systemSchedulerStart(void)
                             tlist);
 
     currentThread_ = toThread;
-
+    bScheduleStart_ = true;
     /* switch to new thread */
     HW::hwContextSwitchTo((uint32_t)&toThread->sp);
 
@@ -133,13 +136,12 @@ void mSchedule::schedule(void)
         /* get switch to thread */
         if(threadPriorityTable_[highestReadyPriority].isEmpty())
         {
-            printf("Error: all thread sleep\r\n");
-            printf("Error: do not use threadSleep in idle thread\r\n");
-            printf("Error: do not use ipc func in interrupt\r\n");
+            KLOGC("Error: all thread sleep\r\n");
+            KLOGC("Error: do not use threadSleep in idle thread\r\n");
+            KLOGC("Error: do not use ipc func in interrupt\r\n");
             while(1);
         }
         toThread = listEntry(threadPriorityTable_[highestReadyPriority].next, struct thread_t, tlist);
-
         /* if the destination thread is not the same as current thread */
         if (toThread != currentThread_)
         {
@@ -148,7 +150,10 @@ void mSchedule::schedule(void)
             currentThread_   = toThread;
 
             //RT_OBJECT_HOOK_CALL(rt_scheduler_hook, (from_thread, toThread));
-
+            if(scheduleHookCb_)
+            {
+                scheduleHookCb_(fromThread, toThread);
+            }
             /* switch to new thread */
             /*RT_DEBUG_LOG(RT_DEBUG_SCHEDULER,
                         ("[%d]switch to priority#%d "
@@ -158,8 +163,8 @@ void mSchedule::schedule(void)
                         NAME_MAX, toThread->name, toThread->sp,
                         NAME_MAX, fromThread->name, fromThread->sp));*/
 
-#ifdef RT_USING_OVERFLOW_CHECK
-            _rt_scheduler_stack_check(toThread);
+#ifdef USING_OVERFLOW_CHECK
+            schedulerStackCheck(toThread);
 #endif
 
             if (mIrq::getInstance()->getInterruptNestWithoutDisableIsr() == 0)

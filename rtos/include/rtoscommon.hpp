@@ -325,7 +325,7 @@ struct thread_t : public mObject_t
 
     void (*cleanup)(struct thread_t *tid);             /**< cleanup function when thread exit */
 
-    uint32_t userData;                              /**< private user data beyond this thread */
+    void* userData;                                     /**< private user data beyond this thread */
 };
 
 /**
@@ -408,5 +408,3 @@ struct mMessagequeue_t : public mIpcObject_t
 
     mList_t             suspendSenderThread;         /**< sender thread suspended on this message queue */
 };
-
-#define rt_kprintf printf

@@ -6,7 +6,7 @@
  *
  * @return current tick
  */
-uint32_t mClock::tickGet(void)
+uint64_t mClock::tickGet(void)
 {
     /* return the global tick */
     return tick;
@@ -14,7 +14,7 @@ uint32_t mClock::tickGet(void)
 /**
  * This function will set current tick
  */
-void mClock::tickSet(uint32_t tick)
+void mClock::tickSet(uint64_t tick)
 {
     long level;
 
@@ -33,17 +33,18 @@ void mClock::tickIncrease(void)
 
     /* check time slice */
     struct thread_t*& thread = mSchedule::getInstance()->getCurrentThread();
-
-    -- thread->remainingTick;
-    if (thread->remainingTick == 0)
+    if(thread != nullptr)
     {
-        /* change to initialized tick */
-        thread->remainingTick = thread->initTick;
+        -- thread->remainingTick;
+        if (thread->remainingTick == 0)
+        {
+            /* change to initialized tick */
+            thread->remainingTick = thread->initTick;
 
-        /* yield */
-        thread->yieldThread();
+            /* yield */
+            thread->yieldThread();
+        }
     }
-
     /* check timer */
     if(cb_)
     {

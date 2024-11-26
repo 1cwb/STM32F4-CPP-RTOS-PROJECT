@@ -10,6 +10,7 @@
 class mthread
 {
     using mThreadCallbackFunc = std::function<void(void*)>;
+    using mThreadHookCallbackFunc = std::function<void(mthread*)>;
 public:
     mthread()
     {
@@ -181,8 +182,10 @@ public:
     char* name() const;
     int32_t getTotalStackSize() const {return thData_.stackSize;}
     int32_t getFreeStackSize() {return (reinterpret_cast<uint8_t*>(thData_.sp) - reinterpret_cast<uint8_t*>(thData_.stackAddr));}
-
-    static void showAllThreadStackSizeInfo();
+    void setUsrData(void* usrdata) {thData_.userData = usrdata;}
+    void* getUsrData() const {return thData_.userData;}
+    static void registerInitHookCallback(const mThreadHookCallbackFunc& initHookCb) {initHookCb_ = initHookCb;}
+    static void registerDeInitHookCallback(const mThreadHookCallbackFunc& deInitHookCb) {deInitHookCb_ = deInitHookCb;}
 private:
     mResult threadInit( const char       *name,
                         void (*entry)(void *parameter),
@@ -224,4 +227,6 @@ private:
     mTimer thTimer_;
     mThreadCallbackFunc cb_;
     void* callbackParam_;
+    static mThreadHookCallbackFunc initHookCb_;
+    static mThreadHookCallbackFunc deInitHookCb_;
 };

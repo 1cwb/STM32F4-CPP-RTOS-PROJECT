@@ -14,6 +14,7 @@ public:
     virtual int getMageZ(){return 0;};
     virtual bool updateData(){return true;}
     virtual int getAzimuth() {return 0;}
+    virtual void getOrignalData(uint8_t* ordata, uint32_t len) {}
 private:
 
 };
